@@ -12,12 +12,12 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 
 const modules = [
+  { to: "/inbox", label: "Client Inbox", icon: Users },
   { to: "/receptionist", label: "Receptionist", icon: Inbox },
   { to: "/design-assistant", label: "Design Assistant", icon: Sparkles },
   { to: "/proposals", label: "Proposal Builder", icon: FileText },
   { to: "/projects", label: "Project Manager", icon: CalendarClock },
   { to: "/documents", label: "Doc Intelligence", icon: Building2 },
-  { to: "/portal", label: "Client Portal", icon: Users },
 ] as const;
 
 export function AppShell({
