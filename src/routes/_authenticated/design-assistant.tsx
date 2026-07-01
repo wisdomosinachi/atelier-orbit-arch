@@ -71,7 +71,7 @@ function DesignAssistant() {
                 messages.map((m) => (
                   <Message key={m.id} from={m.role === "user" ? "user" : "assistant"}>
                     {m.role === "assistant" ? (
-                      <MessageContent variant="flat" className="prose prose-sm max-w-none">
+                      <MessageContent className="bg-transparent p-0 prose prose-sm max-w-none">
                         {m.parts.map((part, i) =>
                           part.type === "text" ? (
                             <MessageResponse key={i}>{part.text}</MessageResponse>
