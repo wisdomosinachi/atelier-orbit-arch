@@ -284,7 +284,7 @@ export const updateProject = createServerFn({ method: "POST" })
   .inputValidator((raw: unknown) => UpdateProject.parse(raw))
   .handler(async ({ data }) => {
     const admin = await getAdmin();
-    const patch: Record<string, unknown> = {};
+    const patch: { phase?: typeof data.phase; next_milestone?: string | null } = {};
     if (data.phase) patch.phase = data.phase;
     if (data.next_milestone !== undefined) patch.next_milestone = data.next_milestone;
     if (Object.keys(patch).length === 0) return { ok: true };
