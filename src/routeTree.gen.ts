@@ -13,6 +13,7 @@ import { Route as ClientRouteImport } from './routes/client'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ClientTokenRouteImport } from './routes/client.$token'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
 import { Route as AuthenticatedReceptionistRouteImport } from './routes/_authenticated/receptionist'
 import { Route as AuthenticatedProposalsRouteImport } from './routes/_authenticated/proposals'
@@ -39,6 +40,11 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const ClientTokenRoute = ClientTokenRouteImport.update({
+  id: '/$token',
+  path: '/$token',
+  getParentRoute: () => ClientRoute,
 } as any)
 const ApiChatRoute = ApiChatRouteImport.update({
   id: '/api/chat',
@@ -81,7 +87,7 @@ const AuthenticatedDesignAssistantRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
-  '/client': typeof ClientRoute
+  '/client': typeof ClientRouteWithChildren
   '/design-assistant': typeof AuthenticatedDesignAssistantRoute
   '/documents': typeof AuthenticatedDocumentsRoute
   '/portal': typeof AuthenticatedPortalRoute
@@ -89,11 +95,12 @@ export interface FileRoutesByFullPath {
   '/proposals': typeof AuthenticatedProposalsRoute
   '/receptionist': typeof AuthenticatedReceptionistRoute
   '/api/chat': typeof ApiChatRoute
+  '/client/$token': typeof ClientTokenRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
-  '/client': typeof ClientRoute
+  '/client': typeof ClientRouteWithChildren
   '/design-assistant': typeof AuthenticatedDesignAssistantRoute
   '/documents': typeof AuthenticatedDocumentsRoute
   '/portal': typeof AuthenticatedPortalRoute
@@ -101,13 +108,14 @@ export interface FileRoutesByTo {
   '/proposals': typeof AuthenticatedProposalsRoute
   '/receptionist': typeof AuthenticatedReceptionistRoute
   '/api/chat': typeof ApiChatRoute
+  '/client/$token': typeof ClientTokenRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
-  '/client': typeof ClientRoute
+  '/client': typeof ClientRouteWithChildren
   '/_authenticated/design-assistant': typeof AuthenticatedDesignAssistantRoute
   '/_authenticated/documents': typeof AuthenticatedDocumentsRoute
   '/_authenticated/portal': typeof AuthenticatedPortalRoute
@@ -115,6 +123,7 @@ export interface FileRoutesById {
   '/_authenticated/proposals': typeof AuthenticatedProposalsRoute
   '/_authenticated/receptionist': typeof AuthenticatedReceptionistRoute
   '/api/chat': typeof ApiChatRoute
+  '/client/$token': typeof ClientTokenRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -129,6 +138,7 @@ export interface FileRouteTypes {
     | '/proposals'
     | '/receptionist'
     | '/api/chat'
+    | '/client/$token'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -141,6 +151,7 @@ export interface FileRouteTypes {
     | '/proposals'
     | '/receptionist'
     | '/api/chat'
+    | '/client/$token'
   id:
     | '__root__'
     | '/'
@@ -154,13 +165,14 @@ export interface FileRouteTypes {
     | '/_authenticated/proposals'
     | '/_authenticated/receptionist'
     | '/api/chat'
+    | '/client/$token'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
-  ClientRoute: typeof ClientRoute
+  ClientRoute: typeof ClientRouteWithChildren
   ApiChatRoute: typeof ApiChatRoute
 }
 
@@ -193,6 +205,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/client/$token': {
+      id: '/client/$token'
+      path: '/$token'
+      fullPath: '/client/$token'
+      preLoaderRoute: typeof ClientTokenRouteImport
+      parentRoute: typeof ClientRoute
     }
     '/api/chat': {
       id: '/api/chat'
@@ -267,11 +286,22 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
 const AuthenticatedRouteRouteWithChildren =
   AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
 
+interface ClientRouteChildren {
+  ClientTokenRoute: typeof ClientTokenRoute
+}
+
+const ClientRouteChildren: ClientRouteChildren = {
+  ClientTokenRoute: ClientTokenRoute,
+}
+
+const ClientRouteWithChildren =
+  ClientRoute._addFileChildren(ClientRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
-  ClientRoute: ClientRoute,
+  ClientRoute: ClientRouteWithChildren,
   ApiChatRoute: ApiChatRoute,
 }
 export const routeTree = rootRouteImport
