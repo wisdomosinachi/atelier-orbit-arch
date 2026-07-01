@@ -9,17 +9,26 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as ClientRouteImport } from './routes/client'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ClientTokenRouteImport } from './routes/client.$token'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
 import { Route as AuthenticatedReceptionistRouteImport } from './routes/_authenticated/receptionist'
 import { Route as AuthenticatedProposalsRouteImport } from './routes/_authenticated/proposals'
 import { Route as AuthenticatedProjectsRouteImport } from './routes/_authenticated/projects'
 import { Route as AuthenticatedPortalRouteImport } from './routes/_authenticated/portal'
+import { Route as AuthenticatedInboxRouteImport } from './routes/_authenticated/inbox'
 import { Route as AuthenticatedDocumentsRouteImport } from './routes/_authenticated/documents'
 import { Route as AuthenticatedDesignAssistantRouteImport } from './routes/_authenticated/design-assistant'
+import { Route as AuthenticatedInboxProjectIdRouteImport } from './routes/_authenticated/inbox.$projectId'
 
+const ClientRoute = ClientRouteImport.update({
+  id: '/client',
+  path: '/client',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
@@ -33,6 +42,11 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const ClientTokenRoute = ClientTokenRouteImport.update({
+  id: '/$token',
+  path: '/$token',
+  getParentRoute: () => ClientRoute,
 } as any)
 const ApiChatRoute = ApiChatRouteImport.update({
   id: '/api/chat',
@@ -60,6 +74,11 @@ const AuthenticatedPortalRoute = AuthenticatedPortalRouteImport.update({
   path: '/portal',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedInboxRoute = AuthenticatedInboxRouteImport.update({
+  id: '/inbox',
+  path: '/inbox',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedDocumentsRoute = AuthenticatedDocumentsRouteImport.update({
   id: '/documents',
   path: '/documents',
@@ -71,88 +90,126 @@ const AuthenticatedDesignAssistantRoute =
     path: '/design-assistant',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedInboxProjectIdRoute =
+  AuthenticatedInboxProjectIdRouteImport.update({
+    id: '/$projectId',
+    path: '/$projectId',
+    getParentRoute: () => AuthenticatedInboxRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/client': typeof ClientRouteWithChildren
   '/design-assistant': typeof AuthenticatedDesignAssistantRoute
   '/documents': typeof AuthenticatedDocumentsRoute
+  '/inbox': typeof AuthenticatedInboxRouteWithChildren
   '/portal': typeof AuthenticatedPortalRoute
   '/projects': typeof AuthenticatedProjectsRoute
   '/proposals': typeof AuthenticatedProposalsRoute
   '/receptionist': typeof AuthenticatedReceptionistRoute
   '/api/chat': typeof ApiChatRoute
+  '/client/$token': typeof ClientTokenRoute
+  '/inbox/$projectId': typeof AuthenticatedInboxProjectIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/client': typeof ClientRouteWithChildren
   '/design-assistant': typeof AuthenticatedDesignAssistantRoute
   '/documents': typeof AuthenticatedDocumentsRoute
+  '/inbox': typeof AuthenticatedInboxRouteWithChildren
   '/portal': typeof AuthenticatedPortalRoute
   '/projects': typeof AuthenticatedProjectsRoute
   '/proposals': typeof AuthenticatedProposalsRoute
   '/receptionist': typeof AuthenticatedReceptionistRoute
   '/api/chat': typeof ApiChatRoute
+  '/client/$token': typeof ClientTokenRoute
+  '/inbox/$projectId': typeof AuthenticatedInboxProjectIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/client': typeof ClientRouteWithChildren
   '/_authenticated/design-assistant': typeof AuthenticatedDesignAssistantRoute
   '/_authenticated/documents': typeof AuthenticatedDocumentsRoute
+  '/_authenticated/inbox': typeof AuthenticatedInboxRouteWithChildren
   '/_authenticated/portal': typeof AuthenticatedPortalRoute
   '/_authenticated/projects': typeof AuthenticatedProjectsRoute
   '/_authenticated/proposals': typeof AuthenticatedProposalsRoute
   '/_authenticated/receptionist': typeof AuthenticatedReceptionistRoute
   '/api/chat': typeof ApiChatRoute
+  '/client/$token': typeof ClientTokenRoute
+  '/_authenticated/inbox/$projectId': typeof AuthenticatedInboxProjectIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
     | '/auth'
+    | '/client'
     | '/design-assistant'
     | '/documents'
+    | '/inbox'
     | '/portal'
     | '/projects'
     | '/proposals'
     | '/receptionist'
     | '/api/chat'
+    | '/client/$token'
+    | '/inbox/$projectId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/auth'
+    | '/client'
     | '/design-assistant'
     | '/documents'
+    | '/inbox'
     | '/portal'
     | '/projects'
     | '/proposals'
     | '/receptionist'
     | '/api/chat'
+    | '/client/$token'
+    | '/inbox/$projectId'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/client'
     | '/_authenticated/design-assistant'
     | '/_authenticated/documents'
+    | '/_authenticated/inbox'
     | '/_authenticated/portal'
     | '/_authenticated/projects'
     | '/_authenticated/proposals'
     | '/_authenticated/receptionist'
     | '/api/chat'
+    | '/client/$token'
+    | '/_authenticated/inbox/$projectId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  ClientRoute: typeof ClientRouteWithChildren
   ApiChatRoute: typeof ApiChatRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/client': {
+      id: '/client'
+      path: '/client'
+      fullPath: '/client'
+      preLoaderRoute: typeof ClientRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/auth': {
       id: '/auth'
       path: '/auth'
@@ -173,6 +230,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/client/$token': {
+      id: '/client/$token'
+      path: '/$token'
+      fullPath: '/client/$token'
+      preLoaderRoute: typeof ClientTokenRouteImport
+      parentRoute: typeof ClientRoute
     }
     '/api/chat': {
       id: '/api/chat'
@@ -209,6 +273,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPortalRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/inbox': {
+      id: '/_authenticated/inbox'
+      path: '/inbox'
+      fullPath: '/inbox'
+      preLoaderRoute: typeof AuthenticatedInboxRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/documents': {
       id: '/_authenticated/documents'
       path: '/documents'
@@ -223,12 +294,31 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDesignAssistantRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/inbox/$projectId': {
+      id: '/_authenticated/inbox/$projectId'
+      path: '/$projectId'
+      fullPath: '/inbox/$projectId'
+      preLoaderRoute: typeof AuthenticatedInboxProjectIdRouteImport
+      parentRoute: typeof AuthenticatedInboxRoute
+    }
   }
 }
+
+interface AuthenticatedInboxRouteChildren {
+  AuthenticatedInboxProjectIdRoute: typeof AuthenticatedInboxProjectIdRoute
+}
+
+const AuthenticatedInboxRouteChildren: AuthenticatedInboxRouteChildren = {
+  AuthenticatedInboxProjectIdRoute: AuthenticatedInboxProjectIdRoute,
+}
+
+const AuthenticatedInboxRouteWithChildren =
+  AuthenticatedInboxRoute._addFileChildren(AuthenticatedInboxRouteChildren)
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedDesignAssistantRoute: typeof AuthenticatedDesignAssistantRoute
   AuthenticatedDocumentsRoute: typeof AuthenticatedDocumentsRoute
+  AuthenticatedInboxRoute: typeof AuthenticatedInboxRouteWithChildren
   AuthenticatedPortalRoute: typeof AuthenticatedPortalRoute
   AuthenticatedProjectsRoute: typeof AuthenticatedProjectsRoute
   AuthenticatedProposalsRoute: typeof AuthenticatedProposalsRoute
@@ -238,6 +328,7 @@ interface AuthenticatedRouteRouteChildren {
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDesignAssistantRoute: AuthenticatedDesignAssistantRoute,
   AuthenticatedDocumentsRoute: AuthenticatedDocumentsRoute,
+  AuthenticatedInboxRoute: AuthenticatedInboxRouteWithChildren,
   AuthenticatedPortalRoute: AuthenticatedPortalRoute,
   AuthenticatedProjectsRoute: AuthenticatedProjectsRoute,
   AuthenticatedProposalsRoute: AuthenticatedProposalsRoute,
@@ -247,10 +338,22 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
 const AuthenticatedRouteRouteWithChildren =
   AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
 
+interface ClientRouteChildren {
+  ClientTokenRoute: typeof ClientTokenRoute
+}
+
+const ClientRouteChildren: ClientRouteChildren = {
+  ClientTokenRoute: ClientTokenRoute,
+}
+
+const ClientRouteWithChildren =
+  ClientRoute._addFileChildren(ClientRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  ClientRoute: ClientRouteWithChildren,
   ApiChatRoute: ApiChatRoute,
 }
 export const routeTree = rootRouteImport
