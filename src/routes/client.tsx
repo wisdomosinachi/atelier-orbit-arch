@@ -4,19 +4,19 @@ import { useServerFn } from "@tanstack/react-start";
 import { startClientProject } from "@/lib/portal.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
+import { ArrowUp } from "lucide-react";
 
 export const Route = createFileRoute("/client")({
   ssr: false,
   head: () => ({
     meta: [
-      { title: "Start a project — Colizza AI Studio" },
+      { title: "Chat with Colizza — start a project" },
       {
         name: "description",
         content:
-          "Send Colizza a project inquiry and get a private link to chat, share files, and track progress.",
+          "Message Colizza Architects directly. No sign-up — just tell us what you're thinking about and we'll open a private workspace for you.",
       },
     ],
   }),
@@ -26,94 +26,106 @@ export const Route = createFileRoute("/client")({
 function ClientLanding() {
   const navigate = useNavigate();
   const start = useServerFn(startClientProject);
-  const [form, setForm] = useState({
-    client_name: "",
-    client_email: "",
-    project_name: "",
-    brief: "",
-  });
+  const [message, setMessage] = useState("");
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!message.trim()) return;
     setLoading(true);
     try {
-      const { token } = await start({ data: form });
-      toast.success("Your workspace is ready.");
+      const { token } = await start({
+        data: { message: message.trim(), client_name: name.trim(), client_email: email.trim() },
+      });
       navigate({ to: "/client/$token", params: { token } });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Something went wrong");
-    } finally {
       setLoading(false);
     }
   };
 
+  const onKey = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+      e.preventDefault();
+      submit(e as unknown as React.FormEvent);
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-paper text-graphite font-sans flex">
-      <div className="hidden md:flex md:w-1/2 border-r border-hairline p-16 flex-col justify-between">
+    <div className="min-h-screen bg-paper text-graphite font-sans flex flex-col">
+      <header className="flex items-center justify-between px-6 md:px-10 py-5 border-b border-hairline">
         <Link to="/client" className="flex items-center gap-2">
           <div className="size-5 bg-graphite rounded-sm" />
           <span className="font-medium tracking-tight text-lg italic">Colizza</span>
         </Link>
-        <div className="max-w-md">
-          <p className="text-[10px] font-mono uppercase tracking-[0.2em] text-muted-foreground mb-4">
-            Client Intake · No account needed
-          </p>
-          <h1 className="text-4xl font-medium tracking-tight leading-tight text-balance">
-            Tell us about your project. We'll open a private workspace.
-          </h1>
-          <p className="mt-6 text-sm text-muted-foreground leading-relaxed max-w-sm">
-            After you send this, you'll get a link where you can message the studio, review
-            designs, and share files — all in one place.
-          </p>
-        </div>
-        <p className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground">
-          Colizza Architects · Studio inquiries
+        <p className="text-[10px] font-mono uppercase tracking-[0.2em] text-muted-foreground">
+          Studio · Direct line
         </p>
-      </div>
+      </header>
 
-      <div className="flex-1 flex items-center justify-center p-8">
-        <form onSubmit={submit} className="w-full max-w-sm space-y-5">
-          <div>
-            <p className="text-[10px] font-mono uppercase tracking-[0.2em] text-muted-foreground mb-2">
-              New inquiry
+      <main className="flex-1 flex items-center justify-center px-6 py-16">
+        <form onSubmit={submit} className="w-full max-w-2xl space-y-8">
+          <div className="space-y-3">
+            <p className="text-[10px] font-mono uppercase tracking-[0.2em] text-muted-foreground">
+              No account · No forms
             </p>
-            <h2 className="text-2xl font-medium tracking-tight">Start a conversation</h2>
+            <h1 className="text-4xl md:text-5xl font-medium tracking-tight leading-[1.05] text-balance">
+              What are you thinking about building?
+            </h1>
+            <p className="text-sm text-muted-foreground max-w-lg leading-relaxed">
+              Start the conversation. A private workspace opens the moment you hit send —
+              chat with the studio, review designs, share files.
+            </p>
           </div>
-          <div>
-            <Label htmlFor="cn" className="text-xs font-medium">Your name</Label>
-            <Input id="cn" required maxLength={120} value={form.client_name}
-              onChange={(e) => setForm({ ...form, client_name: e.target.value })}
-              className="mt-1.5" />
+
+          <div className="relative border border-hairline bg-white rounded-md shadow-sm focus-within:border-graphite transition-colors">
+            <Textarea
+              autoFocus
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              onKeyDown={onKey}
+              rows={5}
+              maxLength={4000}
+              required
+              placeholder="e.g. A small coastal villa in Puglia, four bedrooms, sensitive to the landscape…"
+              className="border-0 resize-none focus-visible:ring-0 focus-visible:ring-offset-0 text-base leading-relaxed pr-14 min-h-[140px]"
+            />
+            <Button
+              type="submit"
+              size="icon"
+              disabled={loading || !message.trim()}
+              className="absolute bottom-3 right-3 size-9 rounded-full"
+              aria-label="Send message"
+            >
+              <ArrowUp className="size-4" />
+            </Button>
           </div>
-          <div>
-            <Label htmlFor="ce" className="text-xs font-medium">Email</Label>
-            <Input id="ce" type="email" required maxLength={255} value={form.client_email}
-              onChange={(e) => setForm({ ...form, client_email: e.target.value })}
-              className="mt-1.5" />
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <Input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              maxLength={120}
+              placeholder="Your name (optional)"
+              className="bg-transparent"
+            />
+            <Input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              maxLength={255}
+              placeholder="Email so we can reach you (optional)"
+              className="bg-transparent"
+            />
           </div>
-          <div>
-            <Label htmlFor="pn" className="text-xs font-medium">Project name</Label>
-            <Input id="pn" required maxLength={160} value={form.project_name}
-              placeholder="e.g. Coastal retreat, Milan"
-              onChange={(e) => setForm({ ...form, project_name: e.target.value })}
-              className="mt-1.5" />
-          </div>
-          <div>
-            <Label htmlFor="br" className="text-xs font-medium">A little about it</Label>
-            <Textarea id="br" rows={5} maxLength={4000} value={form.brief}
-              placeholder="Site, program, budget range, timing — whatever's on your mind."
-              onChange={(e) => setForm({ ...form, brief: e.target.value })}
-              className="mt-1.5" />
-          </div>
-          <Button type="submit" disabled={loading} className="w-full">
-            {loading ? "Opening your workspace…" : "Open my workspace"}
-          </Button>
-          <p className="text-[11px] text-muted-foreground text-center">
-            No password needed. Keep the link we send you private.
+
+          <p className="text-[11px] font-mono uppercase tracking-widest text-muted-foreground">
+            {loading ? "Opening your workspace…" : "Press ⌘/Ctrl + Enter to send"}
           </p>
         </form>
-      </div>
+      </main>
     </div>
   );
 }

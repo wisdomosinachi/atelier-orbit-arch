@@ -22,23 +22,27 @@ async function loadProjectByToken(token: string) {
 }
 
 const StartInput = z.object({
-  client_name: z.string().trim().min(1).max(120),
-  client_email: z.string().trim().email().max(255),
-  project_name: z.string().trim().min(1).max(160),
-  brief: z.string().trim().max(4000).optional().default(""),
+  message: z.string().trim().min(1).max(4000),
+  client_name: z.string().trim().max(120).optional().default(""),
+  client_email: z.string().trim().max(255).optional().default(""),
 });
 
 export const startClientProject = createServerFn({ method: "POST" })
   .inputValidator((raw: unknown) => StartInput.parse(raw))
   .handler(async ({ data }) => {
     const admin = await getAdmin();
+    // Derive a project name from the first line of the message (max ~60 chars)
+    const firstLine = data.message.split("\n")[0].trim();
+    const projectName =
+      firstLine.length > 60 ? `${firstLine.slice(0, 57)}…` : firstLine || "New inquiry";
+
     const { data: project, error } = await admin
       .from("projects")
       .insert({
-        client_name: data.client_name,
-        client_email: data.client_email,
-        project_name: data.project_name,
-        brief: data.brief || null,
+        client_name: data.client_name || "Guest",
+        client_email: data.client_email || "",
+        project_name: projectName,
+        brief: data.message,
       })
       .select("id, share_token")
       .single();
@@ -47,7 +51,7 @@ export const startClientProject = createServerFn({ method: "POST" })
     await admin.from("messages").insert({
       project_id: project.id,
       sender: "client",
-      body: `Hi — I'd like to discuss "${data.project_name}".${data.brief ? `\n\n${data.brief}` : ""}`,
+      body: data.message,
     });
 
     return { token: project.share_token as string };
