@@ -14,7 +14,156 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      approvals: {
+        Row: {
+          created_at: string
+          decided_at: string | null
+          decision_note: string | null
+          description: string | null
+          id: string
+          project_id: string
+          status: Database["public"]["Enums"]["approval_status"]
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          decided_at?: string | null
+          decision_note?: string | null
+          description?: string | null
+          id?: string
+          project_id: string
+          status?: Database["public"]["Enums"]["approval_status"]
+          title: string
+        }
+        Update: {
+          created_at?: string
+          decided_at?: string | null
+          decision_note?: string | null
+          description?: string | null
+          id?: string
+          project_id?: string
+          status?: Database["public"]["Enums"]["approval_status"]
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "approvals_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      messages: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          project_id: string
+          sender: Database["public"]["Enums"]["message_sender"]
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          id?: string
+          project_id: string
+          sender: Database["public"]["Enums"]["message_sender"]
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          project_id?: string
+          sender?: Database["public"]["Enums"]["message_sender"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_files: {
+        Row: {
+          created_at: string
+          filename: string
+          id: string
+          project_id: string
+          size_bytes: number | null
+          storage_path: string
+          uploaded_by: Database["public"]["Enums"]["message_sender"]
+        }
+        Insert: {
+          created_at?: string
+          filename: string
+          id?: string
+          project_id: string
+          size_bytes?: number | null
+          storage_path: string
+          uploaded_by: Database["public"]["Enums"]["message_sender"]
+        }
+        Update: {
+          created_at?: string
+          filename?: string
+          id?: string
+          project_id?: string
+          size_bytes?: number | null
+          storage_path?: string
+          uploaded_by?: Database["public"]["Enums"]["message_sender"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_files_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      projects: {
+        Row: {
+          brief: string | null
+          client_email: string
+          client_name: string
+          created_at: string
+          id: string
+          next_milestone: string | null
+          phase: Database["public"]["Enums"]["project_phase"]
+          project_name: string
+          share_token: string
+          updated_at: string
+        }
+        Insert: {
+          brief?: string | null
+          client_email: string
+          client_name: string
+          created_at?: string
+          id?: string
+          next_milestone?: string | null
+          phase?: Database["public"]["Enums"]["project_phase"]
+          project_name: string
+          share_token?: string
+          updated_at?: string
+        }
+        Update: {
+          brief?: string | null
+          client_email?: string
+          client_name?: string
+          created_at?: string
+          id?: string
+          next_milestone?: string | null
+          phase?: Database["public"]["Enums"]["project_phase"]
+          project_name?: string
+          share_token?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +172,14 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      approval_status: "pending" | "approved" | "changes_requested"
+      message_sender: "client" | "studio"
+      project_phase:
+        | "inquiry"
+        | "design"
+        | "documentation"
+        | "construction"
+        | "complete"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +306,16 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      approval_status: ["pending", "approved", "changes_requested"],
+      message_sender: ["client", "studio"],
+      project_phase: [
+        "inquiry",
+        "design",
+        "documentation",
+        "construction",
+        "complete",
+      ],
+    },
   },
 } as const
