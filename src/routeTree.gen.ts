@@ -22,6 +22,7 @@ import { Route as AuthenticatedPortalRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedInboxRouteImport } from './routes/_authenticated/inbox'
 import { Route as AuthenticatedDocumentsRouteImport } from './routes/_authenticated/documents'
 import { Route as AuthenticatedDesignAssistantRouteImport } from './routes/_authenticated/design-assistant'
+import { Route as AuthenticatedInboxProjectIdRouteImport } from './routes/_authenticated/inbox.$projectId'
 
 const ClientRoute = ClientRouteImport.update({
   id: '/client',
@@ -89,6 +90,12 @@ const AuthenticatedDesignAssistantRoute =
     path: '/design-assistant',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedInboxProjectIdRoute =
+  AuthenticatedInboxProjectIdRouteImport.update({
+    id: '/$projectId',
+    path: '/$projectId',
+    getParentRoute: () => AuthenticatedInboxRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -96,13 +103,14 @@ export interface FileRoutesByFullPath {
   '/client': typeof ClientRouteWithChildren
   '/design-assistant': typeof AuthenticatedDesignAssistantRoute
   '/documents': typeof AuthenticatedDocumentsRoute
-  '/inbox': typeof AuthenticatedInboxRoute
+  '/inbox': typeof AuthenticatedInboxRouteWithChildren
   '/portal': typeof AuthenticatedPortalRoute
   '/projects': typeof AuthenticatedProjectsRoute
   '/proposals': typeof AuthenticatedProposalsRoute
   '/receptionist': typeof AuthenticatedReceptionistRoute
   '/api/chat': typeof ApiChatRoute
   '/client/$token': typeof ClientTokenRoute
+  '/inbox/$projectId': typeof AuthenticatedInboxProjectIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -110,13 +118,14 @@ export interface FileRoutesByTo {
   '/client': typeof ClientRouteWithChildren
   '/design-assistant': typeof AuthenticatedDesignAssistantRoute
   '/documents': typeof AuthenticatedDocumentsRoute
-  '/inbox': typeof AuthenticatedInboxRoute
+  '/inbox': typeof AuthenticatedInboxRouteWithChildren
   '/portal': typeof AuthenticatedPortalRoute
   '/projects': typeof AuthenticatedProjectsRoute
   '/proposals': typeof AuthenticatedProposalsRoute
   '/receptionist': typeof AuthenticatedReceptionistRoute
   '/api/chat': typeof ApiChatRoute
   '/client/$token': typeof ClientTokenRoute
+  '/inbox/$projectId': typeof AuthenticatedInboxProjectIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -126,13 +135,14 @@ export interface FileRoutesById {
   '/client': typeof ClientRouteWithChildren
   '/_authenticated/design-assistant': typeof AuthenticatedDesignAssistantRoute
   '/_authenticated/documents': typeof AuthenticatedDocumentsRoute
-  '/_authenticated/inbox': typeof AuthenticatedInboxRoute
+  '/_authenticated/inbox': typeof AuthenticatedInboxRouteWithChildren
   '/_authenticated/portal': typeof AuthenticatedPortalRoute
   '/_authenticated/projects': typeof AuthenticatedProjectsRoute
   '/_authenticated/proposals': typeof AuthenticatedProposalsRoute
   '/_authenticated/receptionist': typeof AuthenticatedReceptionistRoute
   '/api/chat': typeof ApiChatRoute
   '/client/$token': typeof ClientTokenRoute
+  '/_authenticated/inbox/$projectId': typeof AuthenticatedInboxProjectIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -149,6 +159,7 @@ export interface FileRouteTypes {
     | '/receptionist'
     | '/api/chat'
     | '/client/$token'
+    | '/inbox/$projectId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -163,6 +174,7 @@ export interface FileRouteTypes {
     | '/receptionist'
     | '/api/chat'
     | '/client/$token'
+    | '/inbox/$projectId'
   id:
     | '__root__'
     | '/'
@@ -178,6 +190,7 @@ export interface FileRouteTypes {
     | '/_authenticated/receptionist'
     | '/api/chat'
     | '/client/$token'
+    | '/_authenticated/inbox/$projectId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -281,13 +294,31 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDesignAssistantRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/inbox/$projectId': {
+      id: '/_authenticated/inbox/$projectId'
+      path: '/$projectId'
+      fullPath: '/inbox/$projectId'
+      preLoaderRoute: typeof AuthenticatedInboxProjectIdRouteImport
+      parentRoute: typeof AuthenticatedInboxRoute
+    }
   }
 }
+
+interface AuthenticatedInboxRouteChildren {
+  AuthenticatedInboxProjectIdRoute: typeof AuthenticatedInboxProjectIdRoute
+}
+
+const AuthenticatedInboxRouteChildren: AuthenticatedInboxRouteChildren = {
+  AuthenticatedInboxProjectIdRoute: AuthenticatedInboxProjectIdRoute,
+}
+
+const AuthenticatedInboxRouteWithChildren =
+  AuthenticatedInboxRoute._addFileChildren(AuthenticatedInboxRouteChildren)
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedDesignAssistantRoute: typeof AuthenticatedDesignAssistantRoute
   AuthenticatedDocumentsRoute: typeof AuthenticatedDocumentsRoute
-  AuthenticatedInboxRoute: typeof AuthenticatedInboxRoute
+  AuthenticatedInboxRoute: typeof AuthenticatedInboxRouteWithChildren
   AuthenticatedPortalRoute: typeof AuthenticatedPortalRoute
   AuthenticatedProjectsRoute: typeof AuthenticatedProjectsRoute
   AuthenticatedProposalsRoute: typeof AuthenticatedProposalsRoute
@@ -297,7 +328,7 @@ interface AuthenticatedRouteRouteChildren {
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDesignAssistantRoute: AuthenticatedDesignAssistantRoute,
   AuthenticatedDocumentsRoute: AuthenticatedDocumentsRoute,
-  AuthenticatedInboxRoute: AuthenticatedInboxRoute,
+  AuthenticatedInboxRoute: AuthenticatedInboxRouteWithChildren,
   AuthenticatedPortalRoute: AuthenticatedPortalRoute,
   AuthenticatedProjectsRoute: AuthenticatedProjectsRoute,
   AuthenticatedProposalsRoute: AuthenticatedProposalsRoute,
