@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { startClientProject } from "@/lib/portal.functions";
 import { Button } from "@/components/ui/button";
@@ -7,6 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { ArrowUp } from "lucide-react";
+
+const STORAGE_KEY = "colizza.client.token";
 
 export const Route = createFileRoute("/client")({
   ssr: false,
@@ -31,15 +33,29 @@ function ClientLanding() {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // If a client has already started a project on this device, take them
+  // straight back to their workspace.
+  useEffect(() => {
+    const existing = typeof window !== "undefined" ? localStorage.getItem(STORAGE_KEY) : null;
+    if (existing) {
+      navigate({ to: "/client/$token", params: { token: existing }, replace: true });
+    }
+  }, [navigate]);
+
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!message.trim()) return;
+    if (!message.trim() || loading) return;
     setLoading(true);
     try {
       const { token } = await start({
         data: { message: message.trim(), client_name: name.trim(), client_email: email.trim() },
       });
-      navigate({ to: "/client/$token", params: { token } });
+      try {
+        localStorage.setItem(STORAGE_KEY, token);
+      } catch {
+        /* storage may be unavailable — non-fatal */
+      }
+      await navigate({ to: "/client/$token", params: { token }, replace: true });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Something went wrong");
       setLoading(false);
@@ -52,6 +68,7 @@ function ClientLanding() {
       submit(e as unknown as React.FormEvent);
     }
   };
+
 
   return (
     <div className="min-h-screen bg-paper text-graphite font-sans flex flex-col">
