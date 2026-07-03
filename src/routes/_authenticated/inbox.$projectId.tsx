@@ -7,6 +7,10 @@ import {
   sendStaffMessage,
   updateProject,
   createApproval,
+  deleteMessage,
+  deleteApproval,
+  deleteProjectFile,
+  deleteProject,
 } from "@/lib/portal.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { AppShell } from "@/components/app-shell";
@@ -15,7 +19,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { ArrowLeft, Copy, Send } from "lucide-react";
+import { ArrowLeft, Copy, Send, Trash2 } from "lucide-react";
+import { useNavigate } from "@tanstack/react-router";
 
 const PHASES = ["inquiry", "design", "documentation", "construction", "complete"] as const;
 
@@ -64,16 +69,19 @@ function Conversation() {
         { label: "Phase", value: project.phase },
       ]}
       headerRight={
-        <button
-          onClick={() => {
-            navigator.clipboard.writeText(clientLink);
-            toast.success("Client link copied");
-          }}
-          className="flex items-center gap-2 text-xs font-medium text-muted-foreground hover:text-graphite transition-colors"
-        >
-          <Copy className="size-3.5" strokeWidth={1.5} />
-          Copy client link
-        </button>
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => {
+              navigator.clipboard.writeText(clientLink);
+              toast.success("Client link copied");
+            }}
+            className="flex items-center gap-2 text-xs font-medium text-muted-foreground hover:text-graphite transition-colors"
+          >
+            <Copy className="size-3.5" strokeWidth={1.5} />
+            Copy client link
+          </button>
+          <DeleteProjectButton projectId={projectId} projectName={project.project_name} />
+        </div>
       }
     >
       <div className="flex-1 flex min-h-0">
@@ -84,31 +92,68 @@ function Conversation() {
             </Link>
             <h2 className="text-lg font-medium tracking-tight mt-1">{project.project_name}</h2>
           </div>
-          <MessageList messages={messages} />
+          <MessageList messages={messages} projectId={projectId} />
           <StaffComposer projectId={projectId} />
         </section>
 
         <aside className="w-96 shrink-0 overflow-y-auto p-6 space-y-8 bg-paper/50">
           <PhasePanel project={project} />
           <ApprovalCreator projectId={projectId} />
-          <ApprovalList approvals={approvals} />
-          <FilesList files={files} />
+          <ApprovalList approvals={approvals} projectId={projectId} />
+          <FilesList files={files} projectId={projectId} />
         </aside>
       </div>
     </AppShell>
   );
 }
 
-function MessageList({ messages }: { messages: { id: string; sender: "client" | "studio"; body: string; created_at: string }[] }) {
+function DeleteProjectButton({ projectId, projectName }: { projectId: string; projectName: string }) {
+  const del = useServerFn(deleteProject);
+  const navigate = useNavigate();
+  const qc = useQueryClient();
+  const onClick = async () => {
+    if (!confirm(`Delete "${projectName}" and all its messages, approvals, and files? This can't be undone.`)) return;
+    try {
+      await del({ data: { id: projectId } });
+      qc.invalidateQueries({ queryKey: ["staff-projects"] });
+      toast.success("Project deleted");
+      navigate({ to: "/inbox" });
+    } catch (err) { toast.error(err instanceof Error ? err.message : "Failed"); }
+  };
+  return (
+    <button onClick={onClick} className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-destructive transition-colors">
+      <Trash2 className="size-3.5" strokeWidth={1.5} />
+      Delete
+    </button>
+  );
+}
+
+function MessageList({ messages, projectId }: { messages: { id: string; sender: "client" | "studio"; body: string; created_at: string }[]; projectId: string }) {
   const ref = useRef<HTMLDivElement>(null);
+  const del = useServerFn(deleteMessage);
+  const qc = useQueryClient();
   useEffect(() => { ref.current?.scrollTo({ top: ref.current.scrollHeight }); }, [messages.length]);
+  const onDelete = async (id: string) => {
+    if (!confirm("Delete this message?")) return;
+    try {
+      await del({ data: { id } });
+      qc.invalidateQueries({ queryKey: ["staff-project", projectId] });
+    } catch (err) { toast.error(err instanceof Error ? err.message : "Failed"); }
+  };
   return (
     <div ref={ref} className="flex-1 overflow-y-auto px-8 py-6 space-y-4">
       {messages.map((m) => (
-        <div key={m.id} className={"flex " + (m.sender === "studio" ? "justify-end" : "justify-start")}>
+        <div key={m.id} className={"group flex " + (m.sender === "studio" ? "justify-end" : "justify-start")}>
           <div className="max-w-md">
-            <p className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground mb-1 px-1">
-              {m.sender === "studio" ? "You (Studio)" : "Client"} · {new Date(m.created_at).toLocaleString(undefined, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
+            <p className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground mb-1 px-1 flex items-center gap-2">
+              <span>{m.sender === "studio" ? "You (Studio)" : "Client"} · {new Date(m.created_at).toLocaleString(undefined, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}</span>
+              <button
+                onClick={() => onDelete(m.id)}
+                className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-opacity"
+                aria-label="Delete message"
+              >
+                <Trash2 className="size-3" strokeWidth={1.5} />
+              </button>
             </p>
             <div className={
               "rounded-lg px-4 py-2.5 text-sm whitespace-pre-wrap " +
@@ -242,22 +287,40 @@ function ApprovalCreator({ projectId }: { projectId: string }) {
   );
 }
 
-function ApprovalList({ approvals }: { approvals: { id: string; title: string; status: string; decided_at: string | null; decision_note: string | null }[] }) {
+function ApprovalList({ approvals, projectId }: { approvals: { id: string; title: string; status: string; decided_at: string | null; decision_note: string | null }[]; projectId: string }) {
+  const del = useServerFn(deleteApproval);
+  const qc = useQueryClient();
+  const onDelete = async (id: string) => {
+    if (!confirm("Delete this approval?")) return;
+    try {
+      await del({ data: { id } });
+      qc.invalidateQueries({ queryKey: ["staff-project", projectId] });
+    } catch (err) { toast.error(err instanceof Error ? err.message : "Failed"); }
+  };
   if (approvals.length === 0) return null;
   return (
     <section>
       <p className="text-[10px] font-mono uppercase tracking-[0.2em] text-muted-foreground mb-3">Approvals</p>
       <div className="space-y-2">
         {approvals.map((a) => (
-          <div key={a.id} className="border border-hairline rounded-md px-3 py-2 bg-card">
+          <div key={a.id} className="group border border-hairline rounded-md px-3 py-2 bg-card">
             <div className="flex items-center justify-between gap-2">
               <p className="text-xs font-medium truncate">{a.title}</p>
-              <span className={
-                "text-[9px] font-mono uppercase tracking-widest shrink-0 " +
-                (a.status === "approved" ? "text-graphite"
-                  : a.status === "changes_requested" ? "text-drafting"
-                  : "text-muted-foreground")
-              }>{a.status === "changes_requested" ? "changes" : a.status}</span>
+              <div className="flex items-center gap-2 shrink-0">
+                <span className={
+                  "text-[9px] font-mono uppercase tracking-widest " +
+                  (a.status === "approved" ? "text-graphite"
+                    : a.status === "changes_requested" ? "text-drafting"
+                    : "text-muted-foreground")
+                }>{a.status === "changes_requested" ? "changes" : a.status}</span>
+                <button
+                  onClick={() => onDelete(a.id)}
+                  className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-opacity"
+                  aria-label="Delete approval"
+                >
+                  <Trash2 className="size-3" strokeWidth={1.5} />
+                </button>
+              </div>
             </div>
             {a.decision_note && <p className="text-[10px] text-muted-foreground mt-1 italic">"{a.decision_note}"</p>}
           </div>
@@ -267,20 +330,38 @@ function ApprovalList({ approvals }: { approvals: { id: string; title: string; s
   );
 }
 
-function FilesList({ files }: { files: { id: string; filename: string; uploaded_by: string; url: string | null; created_at: string }[] }) {
+function FilesList({ files, projectId }: { files: { id: string; filename: string; uploaded_by: string; url: string | null; created_at: string }[]; projectId: string }) {
+  const del = useServerFn(deleteProjectFile);
+  const qc = useQueryClient();
+  const onDelete = async (id: string) => {
+    if (!confirm("Delete this file?")) return;
+    try {
+      await del({ data: { id } });
+      qc.invalidateQueries({ queryKey: ["staff-project", projectId] });
+    } catch (err) { toast.error(err instanceof Error ? err.message : "Failed"); }
+  };
   if (files.length === 0) return null;
   return (
     <section>
       <p className="text-[10px] font-mono uppercase tracking-[0.2em] text-muted-foreground mb-3">Files</p>
       <div className="space-y-1">
         {files.map((f) => (
-          <a key={f.id} href={f.url ?? "#"} target="_blank" rel="noreferrer"
-            className="block border border-hairline rounded-md px-3 py-2 bg-card hover:border-graphite/20 transition-colors">
-            <p className="text-xs font-medium truncate">{f.filename}</p>
-            <p className="text-[10px] text-muted-foreground">
-              {f.uploaded_by === "client" ? "Client" : "You"} · {new Date(f.created_at).toLocaleDateString()}
-            </p>
-          </a>
+          <div key={f.id} className="group flex items-center gap-2">
+            <a href={f.url ?? "#"} target="_blank" rel="noreferrer"
+              className="flex-1 min-w-0 block border border-hairline rounded-md px-3 py-2 bg-card hover:border-graphite/20 transition-colors">
+              <p className="text-xs font-medium truncate">{f.filename}</p>
+              <p className="text-[10px] text-muted-foreground">
+                {f.uploaded_by === "client" ? "Client" : "You"} · {new Date(f.created_at).toLocaleDateString()}
+              </p>
+            </a>
+            <button
+              onClick={() => onDelete(f.id)}
+              className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-opacity shrink-0 p-1"
+              aria-label="Delete file"
+            >
+              <Trash2 className="size-3.5" strokeWidth={1.5} />
+            </button>
+          </div>
         ))}
       </div>
     </section>
