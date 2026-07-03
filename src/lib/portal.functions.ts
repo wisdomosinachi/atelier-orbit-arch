@@ -321,3 +321,57 @@ export const createApproval = createServerFn({ method: "POST" })
     });
     return { ok: true };
   });
+
+const IdInput = z.object({ id: z.string().uuid() });
+
+export const deleteMessage = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((raw: unknown) => IdInput.parse(raw))
+  .handler(async ({ data }) => {
+    const admin = await getAdmin();
+    const { error } = await admin.from("messages").delete().eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const deleteApproval = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((raw: unknown) => IdInput.parse(raw))
+  .handler(async ({ data }) => {
+    const admin = await getAdmin();
+    const { error } = await admin.from("approvals").delete().eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const deleteProjectFile = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((raw: unknown) => IdInput.parse(raw))
+  .handler(async ({ data }) => {
+    const admin = await getAdmin();
+    const { data: file, error: fetchErr } = await admin
+      .from("project_files").select("storage_path").eq("id", data.id).maybeSingle();
+    if (fetchErr) throw new Error(fetchErr.message);
+    if (file?.storage_path) {
+      await admin.storage.from(BUCKET).remove([file.storage_path]);
+    }
+    const { error } = await admin.from("project_files").delete().eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const deleteProject = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((raw: unknown) => IdInput.parse(raw))
+  .handler(async ({ data }) => {
+    const admin = await getAdmin();
+    // Best-effort: remove any storage objects under this project's folder
+    const { data: files } = await admin.from("project_files").select("storage_path").eq("project_id", data.id);
+    const paths = (files ?? []).map((f) => f.storage_path).filter(Boolean);
+    if (paths.length > 0) {
+      await admin.storage.from(BUCKET).remove(paths);
+    }
+    const { error } = await admin.from("projects").delete().eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
