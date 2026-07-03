@@ -287,22 +287,40 @@ function ApprovalCreator({ projectId }: { projectId: string }) {
   );
 }
 
-function ApprovalList({ approvals }: { approvals: { id: string; title: string; status: string; decided_at: string | null; decision_note: string | null }[] }) {
+function ApprovalList({ approvals, projectId }: { approvals: { id: string; title: string; status: string; decided_at: string | null; decision_note: string | null }[]; projectId: string }) {
+  const del = useServerFn(deleteApproval);
+  const qc = useQueryClient();
+  const onDelete = async (id: string) => {
+    if (!confirm("Delete this approval?")) return;
+    try {
+      await del({ data: { id } });
+      qc.invalidateQueries({ queryKey: ["staff-project", projectId] });
+    } catch (err) { toast.error(err instanceof Error ? err.message : "Failed"); }
+  };
   if (approvals.length === 0) return null;
   return (
     <section>
       <p className="text-[10px] font-mono uppercase tracking-[0.2em] text-muted-foreground mb-3">Approvals</p>
       <div className="space-y-2">
         {approvals.map((a) => (
-          <div key={a.id} className="border border-hairline rounded-md px-3 py-2 bg-card">
+          <div key={a.id} className="group border border-hairline rounded-md px-3 py-2 bg-card">
             <div className="flex items-center justify-between gap-2">
               <p className="text-xs font-medium truncate">{a.title}</p>
-              <span className={
-                "text-[9px] font-mono uppercase tracking-widest shrink-0 " +
-                (a.status === "approved" ? "text-graphite"
-                  : a.status === "changes_requested" ? "text-drafting"
-                  : "text-muted-foreground")
-              }>{a.status === "changes_requested" ? "changes" : a.status}</span>
+              <div className="flex items-center gap-2 shrink-0">
+                <span className={
+                  "text-[9px] font-mono uppercase tracking-widest " +
+                  (a.status === "approved" ? "text-graphite"
+                    : a.status === "changes_requested" ? "text-drafting"
+                    : "text-muted-foreground")
+                }>{a.status === "changes_requested" ? "changes" : a.status}</span>
+                <button
+                  onClick={() => onDelete(a.id)}
+                  className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-opacity"
+                  aria-label="Delete approval"
+                >
+                  <Trash2 className="size-3" strokeWidth={1.5} />
+                </button>
+              </div>
             </div>
             {a.decision_note && <p className="text-[10px] text-muted-foreground mt-1 italic">"{a.decision_note}"</p>}
           </div>
@@ -312,20 +330,38 @@ function ApprovalList({ approvals }: { approvals: { id: string; title: string; s
   );
 }
 
-function FilesList({ files }: { files: { id: string; filename: string; uploaded_by: string; url: string | null; created_at: string }[] }) {
+function FilesList({ files, projectId }: { files: { id: string; filename: string; uploaded_by: string; url: string | null; created_at: string }[]; projectId: string }) {
+  const del = useServerFn(deleteProjectFile);
+  const qc = useQueryClient();
+  const onDelete = async (id: string) => {
+    if (!confirm("Delete this file?")) return;
+    try {
+      await del({ data: { id } });
+      qc.invalidateQueries({ queryKey: ["staff-project", projectId] });
+    } catch (err) { toast.error(err instanceof Error ? err.message : "Failed"); }
+  };
   if (files.length === 0) return null;
   return (
     <section>
       <p className="text-[10px] font-mono uppercase tracking-[0.2em] text-muted-foreground mb-3">Files</p>
       <div className="space-y-1">
         {files.map((f) => (
-          <a key={f.id} href={f.url ?? "#"} target="_blank" rel="noreferrer"
-            className="block border border-hairline rounded-md px-3 py-2 bg-card hover:border-graphite/20 transition-colors">
-            <p className="text-xs font-medium truncate">{f.filename}</p>
-            <p className="text-[10px] text-muted-foreground">
-              {f.uploaded_by === "client" ? "Client" : "You"} · {new Date(f.created_at).toLocaleDateString()}
-            </p>
-          </a>
+          <div key={f.id} className="group flex items-center gap-2">
+            <a href={f.url ?? "#"} target="_blank" rel="noreferrer"
+              className="flex-1 min-w-0 block border border-hairline rounded-md px-3 py-2 bg-card hover:border-graphite/20 transition-colors">
+              <p className="text-xs font-medium truncate">{f.filename}</p>
+              <p className="text-[10px] text-muted-foreground">
+                {f.uploaded_by === "client" ? "Client" : "You"} · {new Date(f.created_at).toLocaleDateString()}
+              </p>
+            </a>
+            <button
+              onClick={() => onDelete(f.id)}
+              className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-opacity shrink-0 p-1"
+              aria-label="Delete file"
+            >
+              <Trash2 className="size-3.5" strokeWidth={1.5} />
+            </button>
+          </div>
         ))}
       </div>
     </section>
