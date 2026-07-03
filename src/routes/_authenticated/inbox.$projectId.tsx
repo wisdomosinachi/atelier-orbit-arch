@@ -7,6 +7,10 @@ import {
   sendStaffMessage,
   updateProject,
   createApproval,
+  deleteMessage,
+  deleteApproval,
+  deleteProjectFile,
+  deleteProject,
 } from "@/lib/portal.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { AppShell } from "@/components/app-shell";
@@ -15,7 +19,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { ArrowLeft, Copy, Send } from "lucide-react";
+import { ArrowLeft, Copy, Send, Trash2 } from "lucide-react";
+import { useNavigate } from "@tanstack/react-router";
 
 const PHASES = ["inquiry", "design", "documentation", "construction", "complete"] as const;
 
