@@ -6,7 +6,7 @@ import { listProjects } from "@/lib/portal.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { AppShell } from "@/components/app-shell";
 
-export const Route = createFileRoute("/_authenticated/inbox")({
+export const Route = createFileRoute("/_authenticated/inbox/")({
   head: () => ({
     meta: [
       { title: "Inbox — Colizza AI Studio" },
