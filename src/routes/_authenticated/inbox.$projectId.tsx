@@ -128,16 +128,32 @@ function DeleteProjectButton({ projectId, projectName }: { projectId: string; pr
   );
 }
 
-function MessageList({ messages }: { messages: { id: string; sender: "client" | "studio"; body: string; created_at: string }[] }) {
+function MessageList({ messages, projectId }: { messages: { id: string; sender: "client" | "studio"; body: string; created_at: string }[]; projectId: string }) {
   const ref = useRef<HTMLDivElement>(null);
+  const del = useServerFn(deleteMessage);
+  const qc = useQueryClient();
   useEffect(() => { ref.current?.scrollTo({ top: ref.current.scrollHeight }); }, [messages.length]);
+  const onDelete = async (id: string) => {
+    if (!confirm("Delete this message?")) return;
+    try {
+      await del({ data: { id } });
+      qc.invalidateQueries({ queryKey: ["staff-project", projectId] });
+    } catch (err) { toast.error(err instanceof Error ? err.message : "Failed"); }
+  };
   return (
     <div ref={ref} className="flex-1 overflow-y-auto px-8 py-6 space-y-4">
       {messages.map((m) => (
-        <div key={m.id} className={"flex " + (m.sender === "studio" ? "justify-end" : "justify-start")}>
+        <div key={m.id} className={"group flex " + (m.sender === "studio" ? "justify-end" : "justify-start")}>
           <div className="max-w-md">
-            <p className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground mb-1 px-1">
-              {m.sender === "studio" ? "You (Studio)" : "Client"} · {new Date(m.created_at).toLocaleString(undefined, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
+            <p className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground mb-1 px-1 flex items-center gap-2">
+              <span>{m.sender === "studio" ? "You (Studio)" : "Client"} · {new Date(m.created_at).toLocaleString(undefined, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}</span>
+              <button
+                onClick={() => onDelete(m.id)}
+                className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-opacity"
+                aria-label="Delete message"
+              >
+                <Trash2 className="size-3" strokeWidth={1.5} />
+              </button>
             </p>
             <div className={
               "rounded-lg px-4 py-2.5 text-sm whitespace-pre-wrap " +
