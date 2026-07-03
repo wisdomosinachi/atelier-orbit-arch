@@ -69,16 +69,19 @@ function Conversation() {
         { label: "Phase", value: project.phase },
       ]}
       headerRight={
-        <button
-          onClick={() => {
-            navigator.clipboard.writeText(clientLink);
-            toast.success("Client link copied");
-          }}
-          className="flex items-center gap-2 text-xs font-medium text-muted-foreground hover:text-graphite transition-colors"
-        >
-          <Copy className="size-3.5" strokeWidth={1.5} />
-          Copy client link
-        </button>
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => {
+              navigator.clipboard.writeText(clientLink);
+              toast.success("Client link copied");
+            }}
+            className="flex items-center gap-2 text-xs font-medium text-muted-foreground hover:text-graphite transition-colors"
+          >
+            <Copy className="size-3.5" strokeWidth={1.5} />
+            Copy client link
+          </button>
+          <DeleteProjectButton projectId={projectId} projectName={project.project_name} />
+        </div>
       }
     >
       <div className="flex-1 flex min-h-0">
@@ -89,18 +92,39 @@ function Conversation() {
             </Link>
             <h2 className="text-lg font-medium tracking-tight mt-1">{project.project_name}</h2>
           </div>
-          <MessageList messages={messages} />
+          <MessageList messages={messages} projectId={projectId} />
           <StaffComposer projectId={projectId} />
         </section>
 
         <aside className="w-96 shrink-0 overflow-y-auto p-6 space-y-8 bg-paper/50">
           <PhasePanel project={project} />
           <ApprovalCreator projectId={projectId} />
-          <ApprovalList approvals={approvals} />
-          <FilesList files={files} />
+          <ApprovalList approvals={approvals} projectId={projectId} />
+          <FilesList files={files} projectId={projectId} />
         </aside>
       </div>
     </AppShell>
+  );
+}
+
+function DeleteProjectButton({ projectId, projectName }: { projectId: string; projectName: string }) {
+  const del = useServerFn(deleteProject);
+  const navigate = useNavigate();
+  const qc = useQueryClient();
+  const onClick = async () => {
+    if (!confirm(`Delete "${projectName}" and all its messages, approvals, and files? This can't be undone.`)) return;
+    try {
+      await del({ data: { id: projectId } });
+      qc.invalidateQueries({ queryKey: ["staff-projects"] });
+      toast.success("Project deleted");
+      navigate({ to: "/inbox" });
+    } catch (err) { toast.error(err instanceof Error ? err.message : "Failed"); }
+  };
+  return (
+    <button onClick={onClick} className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-destructive transition-colors">
+      <Trash2 className="size-3.5" strokeWidth={1.5} />
+      Delete
+    </button>
   );
 }
 
