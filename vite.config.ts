@@ -12,4 +12,7 @@ export default defineConfig({
     // nitro/vite builds from this
     server: { entry: "server" },
   },
+  // Inside Lovable's sandbox this is ignored (Lovable forces Cloudflare).
+  // On Netlify's build, nitro emits a Netlify Functions bundle from this preset.
+  nitro: { preset: "netlify" },
 });
