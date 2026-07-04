@@ -1,6 +1,6 @@
 [build]
   command = "npm install && node scripts/patch-nf3-nft.mjs && npm run build"
-  publish = "dist/client"
+  publish = "dist"
 
 [build.environment]
   NODE_VERSION = "22"
