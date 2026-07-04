@@ -169,7 +169,34 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      portal_decide_approval: {
+        Args: {
+          p_approval_id: string
+          p_decision: string
+          p_note?: string
+          p_token: string
+        }
+        Returns: undefined
+      }
+      portal_finalize_upload: {
+        Args: {
+          p_filename: string
+          p_size_bytes: number
+          p_storage_path: string
+          p_token: string
+        }
+        Returns: undefined
+      }
+      portal_get_state: { Args: { p_token: string }; Returns: Json }
+      portal_project_id: { Args: { p_token: string }; Returns: string }
+      portal_send_message: {
+        Args: { p_body: string; p_token: string }
+        Returns: undefined
+      }
+      portal_start: {
+        Args: { p_email?: string; p_message: string; p_name?: string }
+        Returns: string
+      }
     }
     Enums: {
       approval_status: "pending" | "approved" | "changes_requested"
